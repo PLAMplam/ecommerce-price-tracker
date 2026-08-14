@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 E-Commerce Price Tracker Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #22c55e;
+            --border-color: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 30px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            color: #38bdf8;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #0f172a;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .badge-cheapest {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: var(--accent-green);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .price-val { font-weight: 600; }
+        .shopee-color { color: #ff6b4a; }
+        .lazada-color { color: #3b82f6; }
+        .tiktok-color { color: #2dd4bf; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📊 E-Commerce Price Tracker</h1>
+        <p>ระบบเปรียบเทียบราคาสินค้าออโต้จาก Shopee, Lazada และ TikTok Shop</p>
+    </header>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>สินค้า (Product)</th>
+                        <th>Shopee</th>
+                        <th>Lazada</th>
+                        <th>TikTok Shop</th>
+                        <th>ถูกที่สุด (Cheapest)</th>
+                    </tr>
+                </thead>
+                <tbody id="priceTableBody">
+                    <tr><td colspan="5" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadPriceData() {
+        try {
+            // ดึงไฟล์ข้อมูลราคาที่บอทสร้างอัปเดตให้อัตโนมัติ
+            const response = await fetch('price_data.json?t=' + new Date().getTime());
+            const data = await response.json();
+            const tbody = document.getElementById('priceTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ยังไม่มีข้อมูลราคา</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${item.name}</td>
+                    <td class="price-val shopee-color">${item.shopee ? item.shopee.toLocaleString() + ' ฿' : 'N/A'}</td>
+                    <td class="price-val lazada-color">${item.lazada ? item.lazada.toLocaleString() + ' ฿' : 'N/A'}</td>
+                    <td class="price-val tiktok-color">${item.tiktok ? item.tiktok.toLocaleString() + ' ฿' : 'N/A'}</td>
+                    <td><span class="badge-cheapest">${item.cheapest}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            document.getElementById('priceTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color: #ef4444;">รอการรันระบบครั้งแรกเพื่อสร้างไฟล์ข้อมูลราคา (price_data.json)</td></tr>';
+        }
+    }
+
+    loadPriceData();
+</script>
+
+</body>
+</html>
