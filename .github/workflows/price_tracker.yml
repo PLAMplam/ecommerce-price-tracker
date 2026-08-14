@@ -1,16 +1,15 @@
-name: E-Commerce Price Tracker
+name: Price Tracker Web Deployment
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # รันอัตโนมัติทุกๆ 6 ชั่วโมง
-  workflow_dispatch:        # ปุ่มกดสั่งรันด้วยมือ (Manual Run)
+    - cron: '0 */6 * * *'  # รันอัปเดตราคาและหน้าเว็บทุก 6 ชั่วโมง
+  workflow_dispatch:
 
 jobs:
-  track:
+  track-and-deploy:
     runs-on: ubuntu-latest
-
     permissions:
-      contents: write  # สิทธิ์ในการ Push ไฟล์ CSV กลับเข้า Repo
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -31,9 +30,9 @@ jobs:
       - name: Run Price Tracker
         run: python tracker.py
 
-      - name: Auto-commit & Push Price History
+      - name: Commit & Push Price Data
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]"
-          git add price_history.csv
-          git diff --quiet && git diff --staged --quiet || (git commit -m "update: price history logs [skip ci]" && git push)
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add price_data.json price_history.csv
+          git diff --quiet && git diff --staged --quiet || (git commit -m "update: price data & history [skip ci]" && git push)
