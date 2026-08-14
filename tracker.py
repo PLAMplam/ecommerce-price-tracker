@@ -10,10 +10,9 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 async def fetch_price(page, url: str, platform: str) -> float:
     if not url:
         return None
-    
     try:
         await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        await asyncio.sleep(4)  # รอให้ JavaScript และราคาในหน้าเว็บ Render ครบ
+        await asyncio.sleep(4)
 
         price = None
         if platform == "shopee":
@@ -36,7 +35,7 @@ async def fetch_price(page, url: str, platform: str) -> float:
 
         return price
     except Exception as e:
-        print(f"⚠️ ไม่สามารถดึงราคาจาก {platform} ได้ ({url}): {e}")
+        print(f"Error fetching {platform} ({url}): {e}")
         return None
 
 async def main():
@@ -47,7 +46,8 @@ async def main():
     with open("products.json", "r", encoding="utf-8") as f:
         products = json.load(f)
 
-    results = []
+    web_results = []
+    csv_results = []
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
@@ -60,7 +60,7 @@ async def main():
         for item in products:
             name = item.get("name", "Unknown Product")
             urls = item.get("urls", {})
-            print(f"🔍 กำลังตรวจสอบราคา: {name}...")
+            print(f"🔍 Checking: {name}...")
 
             shopee_p = await fetch_price(page, urls.get("shopee"), "shopee")
             lazada_p = await fetch_price(page, urls.get("lazada"), "lazada")
@@ -76,34 +76,38 @@ async def main():
             else:
                 cheapest_str = "N/A"
 
-            results.append({
+            # ข้อมูล JSON สำหรับแสดงบนหน้าเว็บ
+            web_results.append({
+                "name": name,
+                "shopee": shopee_p,
+                "lazada": lazada_p,
+                "tiktok": tiktok_p,
+                "cheapest": cheapest_str
+            })
+
+            # ข้อมูลสำหรับสะสมลง CSV
+            csv_results.append({
                 "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Product": name,
-                "Shopee (THB)": f"{shopee_p:,.2f}" if shopee_p else "N/A",
-                "Lazada (THB)": f"{lazada_p:,.2f}" if lazada_p else "N/A",
-                "TikTok (THB)": f"{tiktok_p:,.2f}" if tiktok_p else "N/A",
+                "Shopee (THB)": shopee_p or "N/A",
+                "Lazada (THB)": lazada_p or "N/A",
+                "TikTok (THB)": tiktok_p or "N/A",
                 "Cheapest": cheapest_str
             })
 
         await browser.close()
 
-    df = pd.DataFrame(results)
-    
-    # บันทึกลง CSV ประวัติราคา
+    # บันทึกไฟล์ JSON ให้หน้าเว็บ index.html ดึงไปโชว์
+    with open("price_data.json", "w", encoding="utf-8") as f:
+        json.dump(web_results, f, ensure_ascii=False, indent=2)
+
+    # บันทึกลง CSV ประวัติ
+    df = pd.DataFrame(csv_results)
     history_file = "price_history.csv"
     if os.path.exists(history_file):
         df.to_csv(history_file, mode='a', header=False, index=False, encoding="utf-8-sig")
     else:
         df.to_csv(history_file, index=False, encoding="utf-8-sig")
-
-    # สรุปผลลงหน้า GitHub Step Summary
-    summary_md = "## 📊 ตารางเปรียบเทียบราคาล่าสุด\n\n"
-    summary_md += df.to_markdown(index=False)
-    
-    summary_path = os.getenv("GITHUB_STEP_SUMMARY")
-    if summary_path:
-        with open(summary_path, "a", encoding="utf-8") as f:
-            f.write(summary_md)
 
     print("✅ ทำงานเสร็จสิ้น บันทึกข้อมูลเรียบร้อย")
 
