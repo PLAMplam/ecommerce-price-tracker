@@ -1,0 +1,11 @@
+[
+  {
+    "id": "item_001",
+    "name": "Sony WH-1000XM5",
+    "urls": {
+      "shopee": "https://shopee.co.th/product/123456/789012",
+      "lazada": "https://www.lazada.co.th/products/i123456-s789012.html",
+      "tiktok": "https://shop.tiktok.com/view/product/123456789"
+    }
+  }
+]
