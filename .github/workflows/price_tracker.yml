@@ -2,7 +2,7 @@ name: Price Tracker Web Deployment
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # รันอัปเดตราคาและหน้าเว็บทุก 6 ชั่วโมง
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 jobs:
@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5      # อัปเดตเป็น v5
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6  # อัปเดตเป็น v6
         with:
           python-version: '3.11'
 
@@ -35,4 +35,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add price_data.json price_history.csv
-          git diff --quiet && git diff --staged --quiet || (git commit -m "update: price data & history [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "update: price data & history [skip ci]" && push)
